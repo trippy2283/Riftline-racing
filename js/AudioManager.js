@@ -9,7 +9,7 @@
 var AudioManager = (function () {
 
     var _ctx    = null;
-    var _engine = null;  // oscillator node for engine sound
+    var _engine = null;
     var _gainNode = null;
     var _enabled  = true;
 
@@ -23,7 +23,6 @@ var AudioManager = (function () {
         if (_ctx && _ctx.state === 'suspended') _ctx.resume();
     }
 
-    // ---- Engine Sound ---------------------------------------------------
     function startEngine() {
         if (!_ctx || _engine) return;
         _resume();
@@ -31,12 +30,10 @@ var AudioManager = (function () {
         _gainNode = _ctx.createGain();
         _gainNode.gain.value = 0.25;
 
-        // Base oscillator (engine rumble)
         _engine = _ctx.createOscillator();
         _engine.type = 'sawtooth';
         _engine.frequency.value = 55;
 
-        // Low-pass filter for warmth
         var filter = _ctx.createBiquadFilter();
         filter.type = 'lowpass';
         filter.frequency.value = 600;
@@ -51,7 +48,6 @@ var AudioManager = (function () {
         if (!_ctx || !_engine) return;
         if (!_enabled) { _gainNode.gain.value = 0; return; }
 
-        // Frequency: 55 Hz idle → 280 Hz top speed
         var baseFreq = 55 + speedRatio * 225;
         if (isNitro) baseFreq *= 1.3;
         _engine.frequency.setTargetAtTime(baseFreq, _ctx.currentTime, 0.08);
@@ -67,7 +63,6 @@ var AudioManager = (function () {
         }
     }
 
-    // ---- One-shot tones ------------------------------------------------
     function playTone(freq, duration, type, vol) {
         if (!_ctx || !_enabled) return;
         _resume();
@@ -117,7 +112,7 @@ var AudioManager = (function () {
         playCountdown, playCheckpoint, playLapComplete,
         playPowerup, playNitro, playFinish, playUIClick,
         setEnabled,
-        _resume   // exposed for touch handler to resume suspended AudioContext
+        _resume
     };
 })();
 

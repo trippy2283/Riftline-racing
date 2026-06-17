@@ -6,9 +6,9 @@
 
 var PowerUp = pc.createScript('powerUp');
 
-PowerUp.attributes.add('powerType',    { type: 'string', default: 'nitro' }); // nitro | shield | repair
+PowerUp.attributes.add('powerType',    { type: 'string', default: 'nitro' });
 PowerUp.attributes.add('pickupRadius', { type: 'number', default: 3 });
-PowerUp.attributes.add('respawnTime',  { type: 'number', default: 12 }); // seconds
+PowerUp.attributes.add('respawnTime',  { type: 'number', default: 12 });
 
 PowerUp.prototype.initialize = function () {
     this._active    = true;
@@ -18,7 +18,6 @@ PowerUp.prototype.initialize = function () {
     this._spinAngle = 0;
     this._baseY     = this.entity.getPosition().y;
 
-    // Colour mapping
     var colorMap = {
         nitro:  { r: 1,    g: 0.4,  b: 0  },
         shield: { r: 0.1,  g: 0.5,  b: 1  },
@@ -37,14 +36,12 @@ PowerUp.prototype.update = function (dt) {
         return;
     }
 
-    // Spin + bob animation
     this._spinAngle += 90 * dt;
     this.entity.setEulerAngles(0, this._spinAngle, 0);
     var bob = this._baseY + Math.sin(this._spinAngle * 0.05) * 0.3;
     var curPos = this.entity.getPosition();
     this.entity.setPosition(curPos.x, bob, curPos.z);
 
-    // Check proximity to player
     var gm = this.app.globals && this.app.globals.gameManager;
     if (!gm || !gm.playerCar) return;
 

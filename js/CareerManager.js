@@ -8,7 +8,6 @@
 var CareerManager = (function () {
 
     // ---- Car Definitions ------------------------------------------------
-    // Stats: 1-10 scale. Physics values applied to CarController.
     var CAR_DEFS = [
         {
             id: 'mare_gt',
@@ -16,10 +15,10 @@ var CareerManager = (function () {
             class: 'D',
             description: "Dad's project car. Rear-wheel drive, twitchy, but alive.",
             icon: '🚙',
-            color: '#8B0000',  // deep garage red
+            color: '#8B0000',
             cost: 0,
             unlocked: true,
-            story: true,        // cannot be sold
+            story: true,
             stats: { speed: 5, accel: 6, handling: 4, nitro: 4 },
             physics: { maxSpeed: 52, acceleration: 26, turnSpeed: 78, brakeForce: 38, nitroPower: 1.4 },
             tuning: { rideHeight: 5, camber: 4, tireWidth: 5, suspension: 4 },
@@ -92,9 +91,6 @@ var CareerManager = (function () {
         }
     ];
 
-    // ---- City / Track Definitions ---------------------------------------
-    // Career starts at Tulsa Raceway Park — a real dedicated motorsport
-    // facility, NOT an Oklahoma public street.
     var CITY_DEFS = [
         {
             id: 'tulsa',
@@ -269,13 +265,11 @@ var CareerManager = (function () {
         }
     ];
 
-    // ---- XP Table -------------------------------------------------------
     var XP_TABLE = [0,300,700,1300,2100,3100,4300,5700,7300,9100,11000,
                     13500,16500,20000,24000,28500,33500,39000,45000,52000];
 
     function xpForLevel(lvl) { return XP_TABLE[Math.min(lvl, XP_TABLE.length - 1)] || (lvl * 5000); }
 
-    // ---- Default Save ---------------------------------------------------
     function defaultSave() {
         return {
             credits: 200,
@@ -292,7 +286,6 @@ var CareerManager = (function () {
         };
     }
 
-    // ---- CareerManager --------------------------------------------------
     function CareerManager() {
         this.save = this._loadSave();
         this.cars = JSON.parse(JSON.stringify(CAR_DEFS));
@@ -312,7 +305,6 @@ var CareerManager = (function () {
             var raw = localStorage.getItem('riftline_v2');
             if (raw) {
                 var parsed = JSON.parse(raw);
-                // Migrate missing fields
                 if (!parsed.trophies) parsed.trophies = 0;
                 if (!parsed.unlockedTracks) parsed.unlockedTracks = ['tulsa'];
                 if (!parsed.playerLevel) parsed.playerLevel = 1;
@@ -321,7 +313,7 @@ var CareerManager = (function () {
                 if (!parsed.settings) parsed.settings = { sfx: true, music: true, vibration: true };
                 return parsed;
             }
-        } catch (e) { /* ignore */ }
+        } catch (e) {}
         return defaultSave();
     };
 
@@ -359,21 +351,15 @@ var CareerManager = (function () {
         return this.save.cityProgress[id] || { wins: 0, bestTime: null };
     };
 
-    // Apply tuning stats to physics params (call before race start)
     CareerManager.prototype.getEffectivePhysics = function (carId) {
         var car = this.getCar(carId);
         if (!car) return null;
         var p = JSON.parse(JSON.stringify(car.physics));
         var t = this.save.carTuning[carId] || car.tuning;
-
-        // Suspension stiffness → turn speed
         p.turnSpeed  *= (0.85 + (t.suspension / 10) * 0.3);
-        // Camber → handling (higher camber = more cornering, less straight-line speed)
         p.maxSpeed   *= (1.0 + ((5 - t.camber) / 10) * 0.08);
         p.turnSpeed  *= (0.9 + (t.camber / 10) * 0.2);
-        // Ride height → stability at speed
         p.brakeForce *= (0.9 + ((10 - t.rideHeight) / 10) * 0.2);
-
         return p;
     };
 
@@ -397,17 +383,14 @@ var CareerManager = (function () {
         if (won) { prog.wins++; this.save.totalWins++; }
         if (!prog.bestTime || timeMs < prog.bestTime) prog.bestTime = timeMs;
 
-        // Credits by finish position
         var creditMulti = [1, 0.55, 0.3, 0.1];
         var earned = Math.round(city.reward.credits * (creditMulti[Math.min(position - 1, 3)]));
         this.save.credits += earned;
 
-        // XP award
         var xpMulti = [1, 0.6, 0.35, 0.15];
         var xpEarned = Math.round(city.reward.xp * (xpMulti[Math.min(position - 1, 3)]));
         this.save.playerXP += xpEarned;
 
-        // Level up check
         var levelsGained = 0;
         while (this.save.playerXP >= xpForLevel(this.save.playerLevel) && this.save.playerLevel < 20) {
             this.save.playerXP -= xpForLevel(this.save.playerLevel);
@@ -415,7 +398,6 @@ var CareerManager = (function () {
             levelsGained++;
         }
 
-        // Handle car unlock
         var newCarUnlock = null;
         if (won && city.reward.unlock) {
             var unlockCar = this.getCar(city.reward.unlock);
@@ -426,7 +408,6 @@ var CareerManager = (function () {
             }
         }
 
-        // Handle track unlock
         var newTrackUnlock = null;
         if (won && city.reward.unlockTrack) {
             if (this.save.unlockedTracks.indexOf(city.reward.unlockTrack) === -1) {
@@ -461,14 +442,12 @@ var CareerManager = (function () {
 
     CareerManager.prototype.ownerUnlock = function () {
         var self = this;
-        // Unlock all cars
         this.cars.forEach(function (c) {
             c.unlocked = true;
             if (self.save.unlockedCars.indexOf(c.id) === -1) {
                 self.save.unlockedCars.push(c.id);
             }
         });
-        // Unlock all tracks
         this.cities.forEach(function (city) {
             if (self.save.unlockedTracks.indexOf(city.id) === -1) {
                 self.save.unlockedTracks.push(city.id);
@@ -481,7 +460,6 @@ var CareerManager = (function () {
         this.persist();
     };
 
-    // Static data for external access
     CareerManager.CAR_DEFS  = CAR_DEFS;
     CareerManager.CITY_DEFS = CITY_DEFS;
 

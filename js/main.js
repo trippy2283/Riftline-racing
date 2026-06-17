@@ -2,19 +2,10 @@
    main.js
    Entry point: creates PlayCanvas app, scene hierarchy,
    and orchestrates the race loop.
-
-   Flow:
-     1. Create pc.Application & configure renderer
-     2. Init career data + UIManager
-     3. Listen for 'game:startRace' event from UI
-     4. Build track → spawn cars → start countdown
-     5. Update minimap each frame
-     6. On race end → record results → show results screen
    ===================================================== */
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ---- Application Setup -------------------------------------------
     var canvas = document.getElementById('application-canvas');
 
     var app = new pc.Application(canvas, {
@@ -33,16 +24,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     app.globals = {};
 
-    // ---- Career & UI -------------------------------------------------
     var career = new CareerManager();
     UIManager.init(app, career);
     StoryManager.init(app, career);
 
-    // ---- Persistent Scene Entities (created once) --------------------
     var cameraEntity = _createCamera(app);
     var gmEntity     = _createGameManager(app);
 
-    // ---- Race State --------------------------------------------------
     var currentTrackRoot  = null;
     var playerCarEntity   = null;
     var aiCarEntities     = [];
@@ -50,13 +38,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var raceEndHandled    = false;
     var minimapUpdateTimer = 0;
 
-    // ---- Start Race Event --------------------------------------------
     app.on('game:startRace', function (cityId) {
         currentCityId = cityId || 'tulsa';
         _launchRace(cityId);
     });
 
-    // ---- Race Ended Event -------------------------------------------
     app.on('race:ended', function (results) {
         if (raceEndHandled) return;
         raceEndHandled = true;
@@ -64,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var gm = app.globals.gameManager;
         var timeMs = gm ? gm._elapsedMs : 0;
 
-        // Annotate racer display names
         results.forEach(function (r) {
             if (r.isPlayer) {
                 r.racer._displayName = 'YOU';
@@ -77,11 +62,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 1500);
     });
 
-    // ---- Per-frame Update -------------------------------------------
     app.on('update', function (dt) {
-        // Minimap
         minimapUpdateTimer += dt;
-        if (minimapUpdateTimer > 0.05) {  // 20 fps minimap
+        if (minimapUpdateTimer > 0.05) {
             minimapUpdateTimer = 0;
             var gm = app.globals.gameManager;
             if (gm && gm.state === 'racing' && playerCarEntity) {
@@ -91,15 +74,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ---- Start PlayCanvas -------------------------------------------
     app.start();
 
-    // ========================================================
-    //  INTERNAL HELPERS
-    // ========================================================
-
     function _launchRace(cityId) {
-        // Tear down previous race if any
         _tearDownRace();
         raceEndHandled = false;
 
@@ -109,32 +86,26 @@ document.addEventListener('DOMContentLoaded', function () {
         var trackData = TrackData.getTrack(cityId);
         var carDef    = career.getSelectedCar();
 
-        // ---- Scene background colour ----
         var sky = city.skyColor || [0.01, 0.01, 0.03];
         app.scene.ambientLight = new pc.Color(sky[0], sky[1], sky[2]);
         app.renderer && (app.renderer.clearColor = new pc.Color(sky[0], sky[1], sky[2]));
 
-        // ---- Build track ----
         var trackResult = TrackGenerator.generate(app, cityId, city.color);
         currentTrackRoot = trackResult.root;
 
         var waypointPositions = trackResult.waypointPositions;
         UIManager.setMinimapWaypoints(waypointPositions);
 
-        // ---- Checkpoints ----
         var totalCPs = 8;
         var checkpoints = TrackGenerator.placeCheckpoints(app, currentTrackRoot, waypointPositions, totalCPs);
 
-        // ---- Power-ups ----
         TrackGenerator.placePowerUps(app, currentTrackRoot, waypointPositions);
 
-        // ---- Spawn player car ----
         var startPt = waypointPositions[trackData.startIndex || 0];
         var nextPt  = waypointPositions[(trackData.startIndex || 0) + 1] || waypointPositions[1];
 
         playerCarEntity = _spawnCar(app, 'player', carDef, startPt, nextPt, true);
 
-        // ---- Spawn AI cars ----
         aiCarEntities = [];
         city.opponents.forEach(function (opp, idx) {
             var aiCarDef = career.getCar(opp.carId) || carDef;
@@ -143,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
             var aiNextPt  = waypointPositions[(trackData.startIndex + offset + 1) % waypointPositions.length] || nextPt;
             var aiCar = _spawnCar(app, 'ai_' + idx, aiCarDef, aiStartPt, aiNextPt, false);
 
-            // Setup AI controller
             var aiCtrl = aiCar.script && aiCar.script.aiController;
             if (aiCtrl) {
                 aiCtrl.difficulty = opp.aiDiff;
@@ -154,24 +124,20 @@ document.addEventListener('DOMContentLoaded', function () {
             aiCarEntities.push(aiCar);
         });
 
-        // ---- Camera target ----
         var camFollow = cameraEntity.script && cameraEntity.script.cameraFollow;
         if (camFollow) {
             camFollow.target = playerCarEntity;
             camFollow.startIntro(2);
         }
 
-        // ---- GameManager setup ----
         var gm = app.globals.gameManager;
         if (gm) {
             gm.setupRace(playerCarEntity, aiCarEntities, city.laps, totalCPs);
         }
 
-        // ---- Show HUD & city banner ----
         UIManager.showHUD();
         UIManager.showCityBanner(city, 3);
 
-        // ---- Countdown → Race ----
         setTimeout(function () {
             if (gm) gm.startCountdown();
             AudioManager.startEngine();
@@ -181,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function _spawnCar(app, name, carDef, startPos, nextPos, isPlayer) {
         var car = new pc.Entity(name);
 
-        // Visual body
         var body = new pc.Entity('body');
         body.addComponent('model', { type: 'box' });
         var mat = new pc.StandardMaterial();
@@ -193,7 +158,6 @@ document.addEventListener('DOMContentLoaded', function () {
         body.setLocalScale(2.2, 0.9, 4.2);
         car.addChild(body);
 
-        // Cabin roof
         var roof = new pc.Entity('roof');
         roof.addComponent('model', { type: 'box' });
         var roofMat = new pc.StandardMaterial();
@@ -205,20 +169,16 @@ document.addEventListener('DOMContentLoaded', function () {
         roof.setLocalPosition(0, 0.77, -0.2);
         car.addChild(roof);
 
-        // Headlights (glowing boxes)
         _addLight(car, -0.8, -0.1, 2.1, '#ffffff');
         _addLight(car,  0.8, -0.1, 2.1, '#ffffff');
-        // Taillights
         _addLight(car, -0.8, -0.1, -2.1, '#cc0000');
         _addLight(car,  0.8, -0.1, -2.1, '#cc0000');
 
-        // Wheels
         _addWheel(car, -1.3, -0.45,  1.5);
         _addWheel(car,  1.3, -0.45,  1.5);
         _addWheel(car, -1.3, -0.45, -1.5);
         _addWheel(car,  1.3, -0.45, -1.5);
 
-        // Calculate start heading toward next waypoint
         var heading = 0;
         if (nextPos) {
             heading = Math.atan2(nextPos.x - startPos.x, nextPos.z - startPos.z) * 180 / Math.PI;
@@ -227,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function () {
         car.setPosition(startPos.x, 0.5, startPos.z);
         car.setEulerAngles(0, heading, 0);
 
-        // Scripts
         car.addComponent('script');
         car.script.create('carController', {
             properties: {
@@ -246,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Point light under car (neon underglow effect)
         var glowLight = new pc.Entity('glow');
         glowLight.addComponent('light', {
             type: 'point',
@@ -259,11 +217,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         app.root.addChild(car);
 
-        // Register with game manager
         var gm = app.globals.gameManager;
         if (gm) { gm.allRacers = gm.allRacers || []; }
 
-        // Audio engine update binding for player
         if (isPlayer) {
             app.on('update', function () {
                 var ctrl = car.script && car.script.carController;
@@ -330,18 +286,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function _tearDownRace() {
-        // Destroy track
         if (currentTrackRoot) { currentTrackRoot.destroy(); currentTrackRoot = null; }
-
-        // Destroy cars
         if (playerCarEntity)  { playerCarEntity.destroy();  playerCarEntity  = null; }
         aiCarEntities.forEach(function (e) { if (e) e.destroy(); });
         aiCarEntities = [];
-
-        // Reset GM
         var gm = app.globals.gameManager;
         if (gm) gm.resetRace();
-
         AudioManager.stopEngine();
     }
 
