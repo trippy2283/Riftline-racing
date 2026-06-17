@@ -11,10 +11,25 @@ var CareerManager = (function () {
     // Stats: 1-10 scale. Physics values applied to CarController.
     var CAR_DEFS = [
         {
+            id: 'mare_gt',
+            name: "MARE GT-T85",
+            class: 'D',
+            description: "Dad's project car. Rear-wheel drive, twitchy, but alive.",
+            icon: '🚙',
+            color: '#8B0000',  // deep garage red
+            cost: 0,
+            unlocked: true,
+            story: true,        // cannot be sold
+            stats: { speed: 5, accel: 6, handling: 4, nitro: 4 },
+            physics: { maxSpeed: 52, acceleration: 26, turnSpeed: 78, brakeForce: 38, nitroPower: 1.4 },
+            tuning: { rideHeight: 5, camber: 4, tireWidth: 5, suspension: 4 },
+            notes: 'Rear-wheel drive hatchback. Bald tires, short fuse.'
+        },
+        {
             id: 'vector_x',
             name: 'VECTOR X',
             class: 'D',
-            description: 'Your first ride. Balanced, forgiving.',
+            description: 'Budget build. Reliable in a pinch.',
             icon: '🚗',
             color: '#00aaff',
             cost: 0,
@@ -268,8 +283,8 @@ var CareerManager = (function () {
             totalWins: 0,
             playerLevel: 1,
             playerXP: 0,
-            selectedCar: 'vector_x',
-            unlockedCars: ['vector_x'],
+            selectedCar: 'mare_gt',
+            unlockedCars: ['mare_gt', 'vector_x'],
             unlockedTracks: ['tulsa'],
             cityProgress: {},
             carTuning: {},
@@ -441,6 +456,28 @@ var CareerManager = (function () {
     CareerManager.prototype.resetSave = function () {
         this.save = defaultSave();
         this.cars = JSON.parse(JSON.stringify(CAR_DEFS));
+        this.persist();
+    };
+
+    CareerManager.prototype.ownerUnlock = function () {
+        var self = this;
+        // Unlock all cars
+        this.cars.forEach(function (c) {
+            c.unlocked = true;
+            if (self.save.unlockedCars.indexOf(c.id) === -1) {
+                self.save.unlockedCars.push(c.id);
+            }
+        });
+        // Unlock all tracks
+        this.cities.forEach(function (city) {
+            if (self.save.unlockedTracks.indexOf(city.id) === -1) {
+                self.save.unlockedTracks.push(city.id);
+            }
+        });
+        this.save.credits      = 99999;
+        this.save.playerLevel  = 20;
+        this.save.playerXP     = 0;
+        this.save.ownerAccount = true;
         this.persist();
     };
 

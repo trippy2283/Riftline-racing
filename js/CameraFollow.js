@@ -49,10 +49,13 @@ CameraFollow.prototype.update = function (dt) {
         targetPos.z + behindZ
     );
 
-    // Smooth camera position
-    this._currentPos.copy(this.entity.getPosition());
-    this._currentPos.lerp(this._currentPos, this._desiredPos, this.lag * dt);
-    this.entity.setPosition(this._currentPos);
+    // Smooth camera position (lerp between current and desired)
+    var curPos = this.entity.getPosition();
+    var t = Math.min(this.lag * dt, 1);
+    var newX = curPos.x + (this._desiredPos.x - curPos.x) * t;
+    var newY = curPos.y + (this._desiredPos.y - curPos.y) * t;
+    var newZ = curPos.z + (this._desiredPos.z - curPos.z) * t;
+    this.entity.setPosition(newX, newY, newZ);
 
     // Look at a point slightly ahead of the car
     var aheadX = Math.sin(heading) * 4;

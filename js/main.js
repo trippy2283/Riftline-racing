@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ---- Career & UI -------------------------------------------------
     var career = new CareerManager();
     UIManager.init(app, career);
+    StoryManager.init(app, career);
 
     // ---- Persistent Scene Entities (created once) --------------------
     var cameraEntity = _createCamera(app);

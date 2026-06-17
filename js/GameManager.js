@@ -80,18 +80,30 @@ GameManager.prototype._beginRace = function () {
     this.app.fire('race:started');
 };
 
-GameManager.prototype._onCheckpoint = function (cpIndex, isStartFinish, racer) {
+GameManager.prototype._onCheckpoint = function (evt) {
+    // evt = { checkpointIndex, isStartFinish, racerEntity, timestamp }
+    var racer       = evt.racerEntity;
+    var cpIndex     = evt.checkpointIndex;
+    var isStartFinish = evt.isStartFinish;
+
     var data = this.racerData.get(racer);
     if (!data || data.finished) return;
     if (this.state !== 'racing') return;
 
-    if (cpIndex !== data.nextCp) return; // must hit in order
+    // Must hit checkpoints in order; allow some tolerance for skipped ones
+    var expected = data.nextCp;
+    var diff = (cpIndex - expected + this.totalCheckpoints) % this.totalCheckpoints;
+    if (diff > 1) return;  // too far out of order
 
     data.cpCount++;
     data.nextCp = (cpIndex + 1) % this.totalCheckpoints;
 
-    // Lap completion
-    if (isStartFinish && data.cpCount > 0 && data.cpCount % this.totalCheckpoints === 0) {
+    if (data.isPlayer) {
+        AudioManager.playCheckpoint();
+    }
+
+    // Lap completion: player has just crossed start/finish after visiting all checkpoints
+    if (isStartFinish && data.cpCount > 0 && cpIndex === 0) {
         data.lap++;
         if (data.isPlayer) {
             this.app.fire('ui:lapComplete', data.lap, this.totalLaps);

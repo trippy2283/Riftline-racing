@@ -116,7 +116,8 @@ var AudioManager = (function () {
         init, startEngine, updateEngine, stopEngine,
         playCountdown, playCheckpoint, playLapComplete,
         playPowerup, playNitro, playFinish, playUIClick,
-        setEnabled
+        setEnabled,
+        _resume   // exposed for touch handler to resume suspended AudioContext
     };
 })();
 
