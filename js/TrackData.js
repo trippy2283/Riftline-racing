@@ -2,12 +2,10 @@
    TrackData.js
    Waypoint definitions for every city track.
    Waypoints are [x, z] pairs in world units.
-   Each city has its own closed loop.
    ===================================================== */
 
 window.TrackData = (function () {
 
-    // Helper: rotate all points around origin by angle (degrees)
     function rotatePoints(pts, deg) {
         var rad = deg * Math.PI / 180;
         var cos = Math.cos(rad), sin = Math.sin(rad);
@@ -16,18 +14,13 @@ window.TrackData = (function () {
         });
     }
 
-    // Helper: scale all points
     function scalePoints(pts, s) {
         return pts.map(function (p) { return [p[0] * s, p[1] * s]; });
     }
 
     var tracks = {};
 
-    // ------------------------------------------------------------------
-    // TULSA — Tulsa Raceway Park (dedicated motorsport circuit)
-    // Home track. Long drag-inspired straight with a looping circuit.
-    // This is a real race track — NOT an Oklahoma street.
-    // ------------------------------------------------------------------
+    // TULSA — Tulsa Raceway Park
     tracks['tulsa'] = {
         width: 16,
         startIndex: 0,
@@ -41,29 +34,20 @@ window.TrackData = (function () {
         ]
     };
 
-    // ------------------------------------------------------------------
     // LOS ANGELES — Hollywood Hills Loop
-    // Wide, flowing figure-8 inspired layout with long straights
-    // ------------------------------------------------------------------
     tracks['los_angeles'] = {
         width: 14,
-        pitchProfile: [],   // optional height offsets per segment
         startIndex: 0,
-        waypoints: (function () {
-            return [
-                [0,0],[30,-5],[60,-5],[90,0],[110,20],[120,50],
-                [115,80],[100,105],[75,120],[50,120],[25,110],
-                [10,95],[5,70],[15,50],[35,40],[55,45],[65,60],
-                [60,80],[45,85],[30,80],[20,65],[25,50],[45,40],
-                [65,25],[75,0],[50,-8],[25,-6],[0,0]
-            ];
-        })()
+        waypoints: [
+            [0,0],[30,-5],[60,-5],[90,0],[110,20],[120,50],
+            [115,80],[100,105],[75,120],[50,120],[25,110],
+            [10,95],[5,70],[15,50],[35,40],[55,45],[65,60],
+            [60,80],[45,85],[30,80],[20,65],[25,50],[45,40],
+            [65,25],[75,0],[50,-8],[25,-6],[0,0]
+        ]
     };
 
-    // ------------------------------------------------------------------
     // MIAMI — South Beach Circuit
-    // Fast wide circuit with a chicane section
-    // ------------------------------------------------------------------
     tracks['miami'] = {
         width: 16,
         startIndex: 0,
@@ -76,10 +60,7 @@ window.TrackData = (function () {
         ]
     };
 
-    // ------------------------------------------------------------------
     // CHICAGO — Lakeshore Drive Speedway
-    // Oval-inspired with fast sweeping turns
-    // ------------------------------------------------------------------
     tracks['chicago'] = {
         width: 18,
         startIndex: 0,
@@ -88,7 +69,7 @@ window.TrackData = (function () {
             var n = 24;
             for (var i = 0; i < n; i++) {
                 var t = (i / n) * Math.PI * 2;
-                var rx = 90 + 20 * Math.cos(t * 2);    // slight oval distortion
+                var rx = 90 + 20 * Math.cos(t * 2);
                 var rz = 55;
                 pts.push([rx * Math.cos(t), rz * Math.sin(t)]);
             }
@@ -96,10 +77,7 @@ window.TrackData = (function () {
         })()
     };
 
-    // ------------------------------------------------------------------
     // NEW YORK — Brooklyn Bridge Sprint
-    // Tight city street circuit with sharp corners
-    // ------------------------------------------------------------------
     tracks['new_york'] = {
         width: 13,
         startIndex: 0,
@@ -111,10 +89,7 @@ window.TrackData = (function () {
         ]
     };
 
-    // ------------------------------------------------------------------
     // LAS VEGAS — Neon Strip Grand Prix
-    // Long straights with hairpin turns, figure-8 centre section
-    // ------------------------------------------------------------------
     tracks['las_vegas'] = {
         width: 16,
         startIndex: 0,
@@ -126,11 +101,7 @@ window.TrackData = (function () {
         ]
     };
 
-    // ------------------------------------------------------------------
     // SAN FRANCISCO — Golden Gate Inferno
-    // Hilly track with elevation changes (conveyed via pitch profile)
-    // Technical S-curves
-    // ------------------------------------------------------------------
     tracks['san_francisco'] = {
         width: 13,
         startIndex: 0,
@@ -143,10 +114,7 @@ window.TrackData = (function () {
         ]
     };
 
-    // ------------------------------------------------------------------
     // SEATTLE — Emerald City Speedway
-    // Medium-speed technical layout
-    // ------------------------------------------------------------------
     tracks['seattle'] = {
         width: 14,
         startIndex: 0,
@@ -159,10 +127,7 @@ window.TrackData = (function () {
         ]
     };
 
-    // ------------------------------------------------------------------
     // NEW ORLEANS — French Quarter Grand Circuit
-    // Tight, twisting layout — most technical track in the game
-    // ------------------------------------------------------------------
     tracks['new_orleans'] = {
         width: 12,
         startIndex: 0,

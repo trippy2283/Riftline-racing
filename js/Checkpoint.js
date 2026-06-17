@@ -11,15 +11,13 @@ Checkpoint.attributes.add('isStartFinish',   { type: 'boolean', default: false }
 Checkpoint.attributes.add('triggerRadius',   { type: 'number', default: 9 });
 
 Checkpoint.prototype.initialize = function () {
-    this._triggered = {};   // racer entity id → last trigger time
-    this._cooldown  = 3000; // ms between re-triggers for the same entity
+    this._triggered = {};
+    this._cooldown  = 3000;
     this._pos = new pc.Vec3();
     this._otherPos = new pc.Vec3();
 };
 
 Checkpoint.prototype.update = function (dt) {
-    // Poll registered racers each frame instead of physics callbacks
-    // (avoids Ammo.js dependency, works on all platforms)
     var gm = this.app.globals && this.app.globals.gameManager;
     if (!gm || gm.state !== 'racing') return;
 
