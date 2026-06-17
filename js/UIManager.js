@@ -397,7 +397,6 @@ var UIManager = (function () {
         el('screen-garage').classList.remove('hidden');
         el('credit-count').textContent = _career.save.credits;
 
-        // Reset to cars tab
         document.querySelectorAll('.garage-tab').forEach(function (t) { t.classList.remove('active'); });
         var carsTab = document.querySelector('.garage-tab[data-tab="cars"]');
         if (carsTab) carsTab.classList.add('active');
@@ -570,7 +569,6 @@ var UIManager = (function () {
                 el('results-rewards').style.display = '';
             }
 
-            // Trigger story checks after win count is updated
             if (window.StoryManager) {
                 StoryManager.checkTriggers('race:playerFinished', {
                     position: pos,
@@ -608,7 +606,6 @@ var UIManager = (function () {
         el('story-char-name').textContent = meta.name;
         el('story-text').textContent      = scene.text;
 
-        // Relationship bar
         var relBar = el('story-relationship-bar');
         if (window.StoryManager && scene.char !== 'player') {
             var rel = StoryManager.getRelationship(scene.char);
@@ -792,7 +789,6 @@ var UIManager = (function () {
                 name === 'NITRO' ? '⚡' : name === 'SHIELD' ? '🛡' : '❤️';
         });
 
-        // Story events
         _app.on('story:showScene', function (data) {
             if (data && data.scenes) showStoryModal(data.scenes);
         });

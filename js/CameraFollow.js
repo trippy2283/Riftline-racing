@@ -1,7 +1,6 @@
 /* =====================================================
    CameraFollow.js
-   Smooth chase camera with speed-based FOV expansion,
-   lag offset, and optional cinematic intro sweep.
+   Smooth chase camera with speed-based FOV expansion.
    ===================================================== */
 
 var CameraFollow = pc.createScript('cameraFollow');
@@ -9,7 +8,7 @@ var CameraFollow = pc.createScript('cameraFollow');
 CameraFollow.attributes.add('target',       { type: 'entity' });
 CameraFollow.attributes.add('height',       { type: 'number', default: 5   });
 CameraFollow.attributes.add('distance',     { type: 'number', default: 12  });
-CameraFollow.attributes.add('lag',          { type: 'number', default: 6   }); // lerp speed
+CameraFollow.attributes.add('lag',          { type: 'number', default: 6   });
 CameraFollow.attributes.add('baseFOV',      { type: 'number', default: 62  });
 CameraFollow.attributes.add('maxFOV',       { type: 'number', default: 82  });
 
@@ -39,7 +38,6 @@ CameraFollow.prototype.update = function (dt) {
     var targetAngles = this.target.getEulerAngles();
     var heading = targetAngles.y * Math.PI / 180;
 
-    // Camera sits behind and above the target
     var behindX = -Math.sin(heading) * this.distance;
     var behindZ = -Math.cos(heading) * this.distance;
 
@@ -49,7 +47,6 @@ CameraFollow.prototype.update = function (dt) {
         targetPos.z + behindZ
     );
 
-    // Smooth camera position (lerp between current and desired)
     var curPos = this.entity.getPosition();
     var t = Math.min(this.lag * dt, 1);
     var newX = curPos.x + (this._desiredPos.x - curPos.x) * t;
@@ -57,13 +54,11 @@ CameraFollow.prototype.update = function (dt) {
     var newZ = curPos.z + (this._desiredPos.z - curPos.z) * t;
     this.entity.setPosition(newX, newY, newZ);
 
-    // Look at a point slightly ahead of the car
     var aheadX = Math.sin(heading) * 4;
     var aheadZ = Math.cos(heading) * 4;
     this._lookAtPos.set(targetPos.x + aheadX, targetPos.y + 1, targetPos.z + aheadZ);
     this.entity.lookAt(this._lookAtPos);
 
-    // Speed-based FOV
     var ctrl = this.target.script && this.target.script.carController;
     if (ctrl && this._camComp) {
         var gm = this.app.globals && this.app.globals.gameManager;
@@ -76,14 +71,10 @@ CameraFollow.prototype.update = function (dt) {
         this._camComp.fov = this._lerp(this._camComp.fov, this._targetFOV, 3 * dt);
     }
 
-    // Intro sweep: orbit around the car
     if (this._isIntro) {
         this._introTime += dt;
         var t = this._introTime / this._introDuration;
-        if (t >= 1) {
-            this._isIntro = false;
-            return;
-        }
+        if (t >= 1) { this._isIntro = false; return; }
         var orbitAngle = heading + (1 - t) * Math.PI;
         var orbitDist  = this.distance * 1.8;
         var orbitH     = this.height   * 1.5;

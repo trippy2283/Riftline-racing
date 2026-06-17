@@ -11,19 +11,17 @@ GameManager.attributes.add('totalLaps',       { type: 'number', default: 3 });
 GameManager.attributes.add('totalCheckpoints', { type: 'number', default: 8 });
 
 GameManager.prototype.initialize = function () {
-    // Make globally accessible
     this.app.globals = this.app.globals || {};
     this.app.globals.gameManager = this;
 
-    this.state = 'idle';  // idle | countdown | racing | finished
+    this.state = 'idle';
     this.allRacers  = [];
     this.playerCar  = null;
-    this.racerData  = new Map();  // racer entity → { lap, nextCp, cpCount, finished, startPos, finishTime }
+    this.racerData  = new Map();
     this._startTime = 0;
     this._elapsedMs = 0;
     this._raceResultList = [];
 
-    // Listen to events
     this.app.on('checkpoint:hit',   this._onCheckpoint, this);
     this.app.on('powerup:collected', this._onPowerup, this);
 };
@@ -81,7 +79,6 @@ GameManager.prototype._beginRace = function () {
 };
 
 GameManager.prototype._onCheckpoint = function (evt) {
-    // evt = { checkpointIndex, isStartFinish, racerEntity, timestamp }
     var racer       = evt.racerEntity;
     var cpIndex     = evt.checkpointIndex;
     var isStartFinish = evt.isStartFinish;
@@ -90,10 +87,9 @@ GameManager.prototype._onCheckpoint = function (evt) {
     if (!data || data.finished) return;
     if (this.state !== 'racing') return;
 
-    // Must hit checkpoints in order; allow some tolerance for skipped ones
     var expected = data.nextCp;
     var diff = (cpIndex - expected + this.totalCheckpoints) % this.totalCheckpoints;
-    if (diff > 1) return;  // too far out of order
+    if (diff > 1) return;
 
     data.cpCount++;
     data.nextCp = (cpIndex + 1) % this.totalCheckpoints;
@@ -102,7 +98,6 @@ GameManager.prototype._onCheckpoint = function (evt) {
         AudioManager.playCheckpoint();
     }
 
-    // Lap completion: player has just crossed start/finish after visiting all checkpoints
     if (isStartFinish && data.cpCount > 0 && cpIndex === 0) {
         data.lap++;
         if (data.isPlayer) {
@@ -130,13 +125,11 @@ GameManager.prototype._racerFinished = function (racer, data) {
         this.app.fire('race:playerFinished', data.finishPos, data.finishTime);
     }
 
-    // Check if all racers done
     var allDone = true;
     this.racerData.forEach(function (d) { if (!d.finished) allDone = false; });
     if (allDone) {
         this._endRace();
     } else {
-        // Auto-finish remaining AI after a short grace period
         var self = this;
         setTimeout(function () {
             self.racerData.forEach(function (d, r) {
@@ -159,7 +152,6 @@ GameManager.prototype._endRace = function () {
 };
 
 GameManager.prototype._onPowerup = function (type) {
-    // Player picked up a power-up; forward to CarController
     if (this.playerCar && this.playerCar.script && this.playerCar.script.carController) {
         this.playerCar.script.carController.activatePowerup(type);
     }
@@ -171,7 +163,6 @@ GameManager.prototype.update = function (dt) {
     this._elapsedMs = Date.now() - this._startTime;
     this.app.fire('ui:tick', this._elapsedMs);
 
-    // Compute race positions (by total cp progress)
     var order = [];
     this.racerData.forEach(function (data, racer) {
         order.push({ racer: racer, data: data, progress: data.cpCount + data.lap * 1000 });
@@ -184,7 +175,6 @@ GameManager.prototype.update = function (dt) {
     }
     this.app.fire('ui:position', playerPos, order.length);
 
-    // Wrong-way detection for player
     if (this.playerCar) {
         var pData = this.racerData.get(this.playerCar);
         if (pData) {
@@ -197,7 +187,6 @@ GameManager.prototype.getRacerData = function (racer) {
     return this.racerData.get(racer);
 };
 
-// Reset for reuse
 GameManager.prototype.resetRace = function () {
     this.state = 'idle';
     this._finishCounter = 0;
