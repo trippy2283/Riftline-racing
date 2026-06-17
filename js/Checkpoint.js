@@ -39,7 +39,12 @@ Checkpoint.prototype.update = function (dt) {
             var lastTime = this._triggered[id] || 0;
             if (now - lastTime > this._cooldown) {
                 this._triggered[id] = now;
-                this.app.fire('checkpoint:hit', this.checkpointIndex, this.isStartFinish, racer);
+                this.app.fire('checkpoint:hit', {
+                    checkpointIndex: this.checkpointIndex,
+                    isStartFinish:   this.isStartFinish,
+                    racerEntity:     racer,
+                    timestamp:       now
+                });
             }
         }
     }, this);

@@ -15,9 +15,10 @@ AIController.prototype.initialize = function () {
     this._waypointPositions = [];
     this._currentWpIndex    = 0;
     this._input = { accel: false, brake: false, left: false, right: false, nitro: false };
-    this._carCtrl = this.entity.script.carController;
-    this._targetPos = new pc.Vec3();
-    this._myPos     = new pc.Vec3();
+    this._carCtrl    = this.entity.script.carController;
+    this._baseMaxSpeed = this._carCtrl ? this._carCtrl.maxSpeed : 50;
+    this._targetPos  = new pc.Vec3();
+    this._myPos      = new pc.Vec3();
     this._rubberBandTimer = 0;
 
     // Offset start index to spread AI cars around track
@@ -74,10 +75,10 @@ AIController.prototype.update = function (dt) {
         if (distToPlayer < 8)  diffMod = Math.max(diffMod - 0.1,  0.5);
     }
 
-    // Apply difficulty to max speed via CarController multiplier
+    // Apply difficulty to max speed (use saved base to avoid drift)
     if (this._carCtrl) {
-        var baseMax = this._carCtrl.maxSpeed;
-        this._carCtrl.maxSpeed = baseMax * diffMod;
+        if (!this._baseMaxSpeed) this._baseMaxSpeed = this._carCtrl.maxSpeed;
+        this._carCtrl.maxSpeed = this._baseMaxSpeed * diffMod;
     }
 
     input.accel = !sharpTurn;

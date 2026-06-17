@@ -116,20 +116,14 @@ var TrackGenerator = (function () {
             rRail.setEulerAngles(0, ang, 0);
             root.addChild(rRail);
 
-            // --- Guard barriers (invisible collision walls) ---
-            // Left wall
-            var lWall = new pc.Entity('lwall_' + i);
-            lWall.addComponent('rigidbody', { type: pc.BODYTYPE_STATIC });
-            lWall.addComponent('collision', { type: 'box', halfExtents: new pc.Vec3(0.5, 1.5, len * 0.5) });
-            lWall.setPosition(lx, 0.5, lz);
+            // Guard barriers are visual only (no Ammo.js required)
+            var lWall = makeBox(app, 'lwall_' + i, 0.8, 1.8, len, '#0a0a1a', null);
+            lWall.setPosition(lx, 0.9, lz);
             lWall.setEulerAngles(0, ang, 0);
             root.addChild(lWall);
 
-            // Right wall
-            var rWall = new pc.Entity('rwall_' + i);
-            rWall.addComponent('rigidbody', { type: pc.BODYTYPE_STATIC });
-            rWall.addComponent('collision', { type: 'box', halfExtents: new pc.Vec3(0.5, 1.5, len * 0.5) });
-            rWall.setPosition(rx, 0.5, rz);
+            var rWall = makeBox(app, 'rwall_' + i, 0.8, 1.8, len, '#0a0a1a', null);
+            rWall.setPosition(rx, 0.9, rz);
             rWall.setEulerAngles(0, ang, 0);
             root.addChild(rWall);
 
